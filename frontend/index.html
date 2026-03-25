@@ -3,25 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern To-Do Cloud</title>
+    <title>Minimalist To-Do Cloud</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <div class="background-shapes">
-        <div class="shape"></div>
-        <div class="shape"></div>
-    </div>
-    
-    <div class="container">
-        <header>
-            <h1>My Tasks</h1>
-            <p id="status-cloud"><i class="fas fa-cloud"></i> Connected to Neon Cloud</p>
-        </header>
+    <div class="app-container">
+        <div class="top-nav">
+            <header>
+                <h1>TODO LIST</h1>
+            </header>
+            <button id="theme-switch" class="neu-shadow">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
 
-        <div class="input-group">
-            <input type="text" id="todo-input" placeholder="Add new item">
-            <button id="add-btn"><i class="fas fa-plus"></i></button>
+        <div class="input-section">
+            <input type="text" id="todo-input" class="neu-inset" placeholder="Add a new task...">
+            <button id="add-btn" class="neu-shadow">
+                <i class="fas fa-plus"></i>
+            </button>
         </div>
 
         <ul id="todo-list">

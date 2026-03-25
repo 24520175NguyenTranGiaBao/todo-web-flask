@@ -2,59 +2,71 @@ const API_URL = "https://todo-web-svs3.onrender.com/api/todos";
 const input = document.getElementById('todo-input');
 const addBtn = document.getElementById('add-btn');
 const todoList = document.getElementById('todo-list');
+const themeSwitch = document.getElementById('theme-switch');
 
-// lấy danh sách từ Cloud
+// Dark Mode Toggle
+themeSwitch.onclick = () => {
+    document.body.classList.toggle('dark-theme');
+    const isDark = document.body.classList.contains('dark-theme');
+    themeSwitch.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+};
+
+// Khôi phục theme cũ
+if (localStorage.getItem('theme') === 'dark') {
+    document.body.classList.add('dark-theme');
+    themeSwitch.innerHTML = '<i class="fas fa-sun"></i>';
+}
+
+// Gọi API lấy dữ liệu
 async function fetchTodos() {
     const res = await fetch(API_URL);
     const data = await res.json();
-    renderTodos(data.todos);
+    render(data.todos);
 }
 
-// Hiển thị lên màn hình
-function renderTodos(todos) {
+function render(todos) {
     todoList.innerHTML = '';
-    todos.forEach(todo => {
+    todos.forEach(t => {
         const li = document.createElement('li');
         li.innerHTML = `
-            <span class="${todo.done ? 'done' : ''}">${todo.task}</span>
-            <div class="actions">
-                <i class="fas fa-check" onclick="toggleTodo(${todo.id}, ${todo.done})"></i>
-                <i class="fas fa-trash" onclick="deleteTodo(${todo.id})"></i>
+            <div class="task-content ${t.done ? 'done' : ''}">
+                <input type="checkbox" id="check-${t.id}" style="display:none" ${t.done ? 'checked' : ''} onchange="toggle(${t.id}, ${t.done})">
+                <label for="check-${t.id}" class="custom-cb"></label>
+                <span>${t.task}</span>
             </div>
+            <i class="fas fa-trash" onclick="del(${t.id})"></i>
         `;
         todoList.appendChild(li);
     });
 }
 
-// Thêm mới
+// Thêm, Sửa, Xóa
 addBtn.onclick = async () => {
-    const task = input.value;
-    if (!task) return;
-    
+    if (!input.value) return;
     await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ task, done: false })
+        body: JSON.stringify({ task: input.value, done: false })
     });
     input.value = '';
     fetchTodos();
 };
 
-// Cập nhật trạng thái (Sửa)
-async function toggleTodo(id, currentStatus) {
+async function toggle(id, status) {
     await fetch(`${API_URL}/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ done: !currentStatus })
+        body: JSON.stringify({ done: !status })
     });
     fetchTodos();
 }
 
-// Xóa
-async function deleteTodo(id) {
-    if (!confirm("Xóa nhé?")) return;
-    await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-    fetchTodos();
+async function del(id) {
+    if (confirm("Xóa nhé?")) {
+        await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+        fetchTodos();
+    }
 }
 
 fetchTodos();
