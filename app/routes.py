@@ -1,12 +1,19 @@
-from .database import get_db_connection
 from flask import Blueprint, jsonify, request
+import psycopg2.extras
+from .database import get_db_connection
 
 todo_api = Blueprint('todo_api', __name__)
 
 @todo_api.route('/todos', methods=['GET'])
 def get_todo_list():
     conn = get_db_connection()
-    todos_from_db = conn.execute('SELECT * FROM todos').fetchall()
+    # Mở cursor đặc biệt để Postgres trả về Dictionary giống như SQLite
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    
+    cur.execute('SELECT * FROM todos')
+    todos_from_db = cur.fetchall()
+    
+    cur.close()
     conn.close()
 
     todos = []
@@ -14,7 +21,7 @@ def get_todo_list():
         todos.append({
             "id" : item["id"],
             "task" : item["task"],
-            "done" : bool(item["done"])
+            "done" : item["done"]
         })
         
     return jsonify({
@@ -28,11 +35,16 @@ def add_todo_items():
     request_data = request.get_json()
     task_name = request_data.get('task')
     task_status = request_data.get('done', False)
+    
     conn = get_db_connection()
-    conn.execute(
-        'INSERT INTO todos (task, done) VALUES (?, ?)', (task_name, task_status)
+    cur = conn.cursor()
+    
+    cur.execute(
+        'INSERT INTO todos (task, done) VALUES (%s, %s)', (task_name,task_status)
     )
     conn.commit()
+    
+    cur.close()
     conn.close()
 
     return jsonify({
@@ -40,14 +52,18 @@ def add_todo_items():
         "message" : "Todo item added successfully"
     }), 201
 
+
 @todo_api.route('/todos/<int:todo_id>', methods = ['PUT'])
 def update_todo(todo_id):
     req_data = request.get_json()
     conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-    item = conn.execute('SELECT * FROM todos WHERE id = ?', (todo_id,)).fetchone()
+    cur.execute('SELECT * FROM todos WHERE id = %s', (todo_id,))
+    item = cur.fetchone()
 
     if item is None:
+        cur.close()
         conn.close()
         return jsonify({
             "message" : "item not found"
@@ -63,8 +79,10 @@ def update_todo(todo_id):
     else:
         new_done = item["done"]
     
-    conn.execute('UPDATE todos SET task = ?, done = ? WHERE id = ?', (new_task, new_done, todo_id))
+    cur.execute('UPDATE todos SET task = %s, done = %s WHERE id = %s', (new_task, new_done, todo_id))
     conn.commit()
+    
+    cur.close()
     conn.close()
 
     return jsonify({
@@ -73,24 +91,30 @@ def update_todo(todo_id):
         "item" : {
             "id" : todo_id,
             "task" : new_task,
-            "done" : bool(new_done)
+            "done" : new_done
         }
     }), 200
+
 
 @todo_api.route('/todos/<int:todo_id>', methods = ['DELETE'])
 def delete_item(todo_id):
     conn = get_db_connection()
-
-    item = conn.execute('SELECT * FROM todos WHERE id = ?', (todo_id,)).fetchone()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute('SELECT * FROM todos WHERE id = %s', (todo_id,))
+    item = cur.fetchone()
     
     if item is None:
+        cur.close()
         conn.close()
         return jsonify({
             "message" : "item not found"
         }), 404
     
-    conn.execute('DELETE FROM todos WHERE id = ?', (todo_id,))
+
+    cur.execute('DELETE FROM todos WHERE id = %s', (todo_id,))
     conn.commit()
+    
+    cur.close()
     conn.close()
 
     return jsonify({

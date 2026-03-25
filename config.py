@@ -1,7 +1,7 @@
 import os
+from dotenv import load_dotenv
 
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-
+load_dotenv()
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'mat-khau-du-phong'
-    DB_PATH = os.path.join(BASE_DIR, 'todos.db')
+    DATABASE_URL = os.environ.get('DATABASE_URL')

@@ -1,19 +1,21 @@
-import sqlite3
+import psycopg2
 from config import Config
 
 def get_db_connection():
-    conn = sqlite3.connect(Config.DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(Config.DATABASE_URL)
     return conn
 
 def init_db():
     conn = get_db_connection()
-    conn.execute('''
+    cur = conn.cursor()
+    cur.execute('''
         CREATE TABLE IF NOT EXISTS todos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             task TEXT NOT NULL,
-            done BOOLEAN NOT NULL CHECK (done IN (0,1))
+            done BOOLEAN NOT NULL DEFAULT FALSE
         )
     ''')
     conn.commit()
+    
+    cur.close()
     conn.close()
