@@ -49,7 +49,7 @@ def add_todo_items():
 
     return jsonify({
         "status" : "success",
-        "message" : "Todo item added successfully"
+        "message" : "Item được thêm thành công"
     }), 201
 
 
